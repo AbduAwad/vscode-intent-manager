@@ -16,7 +16,7 @@
     "onFileSystem:im",
     "onStartupFinished"
   ],
-  "main": "./out/main.js",
+  "main": "./out/extension.js",
   "contributes": {
     "snippets": [
       {
@@ -199,12 +199,32 @@
     "configuration": {
       "title": "IntentManager",
       "properties": {
-        "intentManager.NSPIP": {
+        "intentManager.activeServer": {
           "type": "string",
           "default": "localhost",
           "scope": "application",
           "format": "ipv4",
           "description": "NSP IP address."
+        },
+        "intentManager.NSPS": {
+          "title": "NSP Servers",
+          "markdownDescription": "List of NSP servers for workspace",
+          "scope": "window",
+          "type": "array",
+          "items":{
+            "type": "object",
+            "description": "NSP Server entry",
+            "properties": {
+              "id": {
+                "type": "string",
+                "uniqueItems": true
+              },
+              "host": {
+                "description": "NSP server ip address or hostname",
+                "type": "string"
+              }
+            }
+          }
         },
         "intentManager.port": {
           "type": "string",
@@ -220,7 +240,7 @@
           ],
           "description": "NSP IM port."
         },
-        "intentManager.user": {
+        "intentManager.username": {
           "type": "string",
           "default": "user",
           "scope": "application",
@@ -251,7 +271,7 @@
           "scope": "application",
           "default": false,
           "description": "Enable parallel intent operations (EXPERIMENTAL)"
-        }        
+        }
       }
     }
   },

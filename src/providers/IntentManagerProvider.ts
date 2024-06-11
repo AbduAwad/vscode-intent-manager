@@ -90,8 +90,8 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	
 	constructor (context: vscode.ExtensionContext) {
 		const config = vscode.workspace.getConfiguration('intentManager');
-		this.nspAddr = config.get("NSPIP") ?? "";
-		this.username = config.get("user") ?? "admin";
+		this.nspAddr = config.get("activeServer") ?? "";
+		this.username = config.get("username") ?? "admin";
 		this.secretStorage = context.secrets;
 		this.port = config.get("port") ?? "443";
 		this.timeout = config.get("timeout") ?? 90000;
@@ -144,7 +144,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
             }
         }
 
-		this.password = await this.secretStorage.get("nsp_im_password");
+		this.password = await this.secretStorage.get(this.nspAddr + "_password");
 
         if (this.password && !this.authToken) {
             this.authToken = new Promise((resolve, reject) => {
@@ -341,6 +341,43 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		}
 		return false;
 	}
+
+		/**
+	 * Method to validate NSP credentials
+	 * @param {string} ip - IP address of the NSP
+	 * @param {string} username - NSP username
+	 * @param {string} password - NSP password
+	*/
+	private async validateNSPCredentials(ip: string, username: string, password: string): Promise<boolean> {
+
+		console.log("Executing validateIpCredentials()");
+		const fetch = require('node-fetch');
+		const base64 = require('base-64');
+		const timeout = new AbortController();
+		setTimeout(() => timeout.abort(), this.timeout);
+
+		const url = "https://"+ip+"/rest-gateway/rest/api/v1/auth/token";
+		try {
+			const response = await fetch(url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Cache-Control': 'no-cache',
+					'Authorization': 'Basic ' + base64.encode(username+ ":" +password)
+				},
+				body: '{"grant_type": "client_credentials"}',
+				signal: timeout.signal
+			});
+			console.log("POST", url, response.status);
+			if (!response.ok) {
+				return false;
+			}
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
 
 	/**
 	 * Retrieve and store NSP release in this.nspVersion.
@@ -1261,6 +1298,123 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 
 	// --- SECTION: IntentManagerProvider specific public methods implementation ---
 
+	async setServer(config: vscode.WorkspaceConfiguration, statusbar_server: vscode.StatusBarItem, secretStorage: vscode.SecretStorage): Promise<void> {
+		
+		console.log('config: ', config);
+		console.log("Executing setServer()");
+		let test_servers : Array<{id: string, ip: string}> = config.get("NSPS") ?? [];
+		// test servers is a list of server objects with keys id and ip I want to append that to a server list of strings:
+		let servers = []
+		test_servers.forEach(function (server) {
+			servers.push(server.id + " | " + server.ip);
+		});
+
+		const quickPick = vscode.window.createQuickPick();
+		quickPick.placeholder = 'Select NSP Server...';
+		quickPick.items = servers.map(server => ({ label: server , iconPath: new vscode.ThemeIcon('vm-connect')}));
+		quickPick.buttons = [{ iconPath: new vscode.ThemeIcon('add'), tooltip: 'Add Server'}, { iconPath: new vscode.ThemeIcon('remove'), tooltip: 'Remove Server'}];
+		quickPick.show();
+		await quickPick.onDidTriggerButton(async button => { // add a server
+			if ((button.iconPath as vscode.ThemeIcon).id === 'add') {
+				const id = await vscode.window.showInputBox({ prompt: 'Enter an identifier for your NSP' });
+				const ip = await vscode.window.showInputBox({ prompt: 'Enter NSP IP Address' });
+				
+				let server = {id: '', ip: ''};
+				server['id'] = id;
+				server['ip'] = ip;
+
+				// check if test_servers already has this id: 
+				if (test_servers.some(e => e.id === id)) {
+					vscode.window.showInformationMessage('Server with id: ' + id + ' already exists');
+				} else {
+					test_servers.push(server);
+					config.update('NSPS', test_servers, vscode.ConfigurationTarget.Global);
+					vscode.window.showInformationMessage('Server: ' + id + ' added');
+				}
+			} else if ((button.iconPath as vscode.ThemeIcon).id === 'remove') { // remove a server
+				const removeQuickPick = vscode.window.createQuickPick();
+				removeQuickPick.placeholder = 'Select Server to Remove...';
+				removeQuickPick.items = servers.map(server => ({ label: server , iconPath: new vscode.ThemeIcon('vm-active')}));
+				removeQuickPick.show();
+				await removeQuickPick.onDidChangeSelection(async selection => {
+					if (selection[0]) {
+						let ip = selection[0].label;
+						const ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
+						const match = ip.match(ipRegex);
+						if (match) {
+							ip =  match[0];
+						} else {
+							throw new Error("No IP address found in the input string");
+						}
+						const index = servers.indexOf(ip);
+						await vscode.window.showWarningMessage('Are you sure you want to remove ' + selection[0].label + '?', 'Yes', 'No').then(async (value) => {
+							if (value === 'Yes') {
+								servers.splice(index, 1); // remove the server
+								await config.update('servers', servers, vscode.ConfigurationTarget.Global);
+								vscode.window.showWarningMessage('Server: ' + ip + ' removed');
+								return;
+							}
+						});
+					}
+				});
+			}
+		});
+
+		quickPick.onDidChangeSelection(async selection => { // when a server is selected
+			
+			console.log('selection: ', selection);
+			let ip = selection[0].label;
+
+			const ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
+			const match = ip.match(ipRegex);
+			
+			if (match) {
+				ip =  match[0];
+			} else {
+				throw new Error("No IP address found in the input string");
+			}
+
+			console.log('ip: ', ip)
+			if (await secretStorage.get(ip + '_username') != undefined && await secretStorage.get(ip + '_password') != undefined) {
+				await config.update('username', await secretStorage.get(ip + '_username'), vscode.ConfigurationTarget.Global);
+				await config.update('activeServer', ip, vscode.ConfigurationTarget.Global);
+				vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
+				this.updateSettings();
+				if (selection[0]) {
+					statusbar_server.text = 'NSP: ' + ip;
+					quickPick.hide();
+					quickPick.dispose();
+				}
+			} else { // If the username and password are not cached, prompt the user for the username and password
+				const usernameInput: string = await vscode.window.showInputBox({
+					prompt: 'Enter Username...',
+				}) ?? '';
+
+				const passwordInput: string = await vscode.window.showInputBox({
+					password: true, 
+					prompt: 'Enter Password...'
+				}) ?? '';
+
+				console.log(await this.validateNSPCredentials(ip, usernameInput, passwordInput));
+				if (await this.validateNSPCredentials(ip, usernameInput, passwordInput)) {
+					secretStorage.store(ip + '_username', usernameInput);
+					secretStorage.store(ip + '_password', passwordInput);
+					await config.update('username', usernameInput, vscode.ConfigurationTarget.Global);
+					await config.update('activeServer', ip, vscode.ConfigurationTarget.Global);
+					if (selection[0]) {
+						statusbar_server.text = 'NSP: ' + ip;
+						quickPick.hide();
+						quickPick.dispose();
+					}
+					vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
+					await this.updateSettings();
+				} else {
+					vscode.window.showErrorMessage('Invalid Credentials');
+				}
+			}
+		});
+	}
+
 	/**
 	 * Update IntentManagerProvider after configuration changes
 	 * 
@@ -1275,8 +1429,8 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		this.fileIgnore = config.get("ignoreLabels") ?? [];
 		this.parallelOps = config.get("parallelOperations.enable") ?? false;
 
-		const nsp:string = config.get("NSPIP") ?? "";
-		const user:string = config.get("user") ?? "admin";
+		const nsp:string = config.get("activeServer") ?? "";
+		const user:string = config.get("username") ?? "admin";
 		const port:string =  config.get("port") ?? "443";
 
 		if (nsp !== this.nspAddr || user !== this.username || port !== this.port) {

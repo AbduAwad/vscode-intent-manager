@@ -3,10 +3,14 @@
 import * as vscode from 'vscode';
 
 import { IntentManagerProvider } from './providers';
+import { privateEncrypt } from 'crypto';
 
 export function activate(context: vscode.ExtensionContext) {
+
+	const workflowManagerconfig = vscode.workspace.getConfiguration('workflowManager');
+
 	const config = vscode.workspace.getConfiguration('intentManager');
-	const addr : string = config.get("NSPIP") ?? "";
+	const addr : string = config.get("activeServer") ?? "";
 	const secretStorage : vscode.SecretStorage = context.secrets;
 
 	const imProvider = new IntentManagerProvider(context);
@@ -30,8 +34,10 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	vscode.commands.registerCommand('nokia-intent-manager.setPassword', async () => {
 		const passwordInput: string = await vscode.window.showInputBox({password: true, title: "Password"}) ?? '';
-		if(passwordInput !== '')
-			secretStorage.store("nsp_im_password", passwordInput);
+		
+		if(passwordInput !== '') {
+			secretStorage.store(addr + '_password', passwordInput);
+		}
 	});
 
 	function updateStatusBarItem(){
@@ -56,10 +62,26 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (e) => {
+		console.log("Configuration changed")
 		if (e.affectsConfiguration('intentManager')) {
-			// config has changed
-			imProvider.updateSettings();
+			imProvider.updateSettings(); // config has changed
 		}
+		if (e.affectsConfiguration('workflowManager')) {
+			const wfmConfig = vscode.workspace.getConfiguration('workflowManager'); // update intenet Manager NSP's:
+			let imConfig = vscode.workspace.getConfiguration('intentManager');
+			if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
+				let servers = wfmConfig.get("NSPS") ?? {};
+				console.log('wfmConfig servers: ', servers);
+				imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
+			}
+			if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
+				let server = wfmConfig.get("activeServer"); // update the active server:
+				imConfig.update("activeServer", server, vscode.ConfigurationTarget.Global);
+			}
+			// reload the window
+			vscode.commands.executeCommand('workbench.action.reloadWindow');
+		}
+		
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.updateStatusBar', async () => updateStatusBarItem()));
@@ -67,6 +89,21 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(imProvider.getStatusBarItem());
 	context.subscriptions.push(vscode.languages.registerCodeLensProvider({scheme: 'im'}, imProvider));
 
+	// NSP - Multiple Server Support:
+	const statusbar_server = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 90);
+	statusbar_server.command = 'nokia-wfm.setServer';
+	statusbar_server.tooltip = 'Set Workflow Manager NSP Server';
+	statusbar_server.text = 'NSP: ' + addr ?? 'Select Server';
+	statusbar_server.show();
+
+	// --- Set Workflow Manager NSP Server when the user clicks the server button
+	context.subscriptions.push(vscode.commands.registerCommand('nokia-wfm.setServer', async () => {
+		let updatedConfig = vscode.workspace.getConfiguration('intentManager');
+		imProvider.setServer(updatedConfig, statusbar_server, secretStorage); // set Active Workflow Manager NSP Server
+	
+	}));
+
+	context.subscriptions.push
 	let fileAssociations : {[key: string]: string} = vscode.workspace.getConfiguration('files').get('associations') || {};
 	fileAssociations["/*_v*/views/*"] = "json";
 	fileAssociations["/*_v*/intents/*"] = "json";
