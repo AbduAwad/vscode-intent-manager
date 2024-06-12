@@ -202,7 +202,7 @@
         "intentManager.activeServer": {
           "type": "string",
           "default": "localhost",
-          "scope": "application",
+          "scope": "window",
           "format": "ipv4",
           "description": "NSP IP address."
         },
@@ -229,7 +229,7 @@
         "intentManager.port": {
           "type": "string",
           "default": "8545",
-          "scope": "application",
+          "scope": "window",
           "enum": [
             "443",
             "8545"
@@ -239,18 +239,6 @@
             "8545 used in older NSP releases, to be deprecated."
           ],
           "description": "NSP IM port."
-        },
-        "intentManager.username": {
-          "type": "string",
-          "default": "user",
-          "scope": "application",
-          "description": "NSP user."
-        },
-        "intentManager.password": {
-          "type": "null",
-          "markdownDescription": "[Set Password](command:nokia-intent-manager.setPassword)",
-          "scope": "application",
-          "description": "NSP user password."
         },
         "intentManager.timeout": {
           "type": "number",

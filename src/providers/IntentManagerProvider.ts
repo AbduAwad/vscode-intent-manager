@@ -91,7 +91,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	constructor (context: vscode.ExtensionContext) {
 		const config = vscode.workspace.getConfiguration('intentManager');
 		this.nspAddr = config.get("activeServer") ?? "";
-		this.username = config.get("username") ?? "admin";
 		this.secretStorage = context.secrets;
 		this.port = config.get("port") ?? "443";
 		this.timeout = config.get("timeout") ?? 90000;
@@ -145,6 +144,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
         }
 
 		this.password = await this.secretStorage.get(this.nspAddr + "_password");
+		this.username = await this.secretStorage.get(this.nspAddr + "_username");
 
         if (this.password && !this.authToken) {
             this.authToken = new Promise((resolve, reject) => {
@@ -1392,7 +1392,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 
 			console.log('ip: ', ip)
 			if (await secretStorage.get(ip + '_username') != undefined && await secretStorage.get(ip + '_password') != undefined) {
-				await config.update('username', await secretStorage.get(ip + '_username'), vscode.ConfigurationTarget.Global);
 				await config.update('activeServer', ip, vscode.ConfigurationTarget.Global);
 				vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
 				this.updateSettings();
@@ -1415,7 +1414,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 				if (await this.validateNSPCredentials(ip, usernameInput, passwordInput)) {
 					secretStorage.store(ip + '_username', usernameInput);
 					secretStorage.store(ip + '_password', passwordInput);
-					await config.update('username', usernameInput, vscode.ConfigurationTarget.Global);
 					await config.update('activeServer', ip, vscode.ConfigurationTarget.Global);
 					if (selection[0]) {
 						statusbar_server.text = 'NSP: ' + ip;
@@ -1448,18 +1446,15 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		this.parallelOps = config.get("parallelOperations.enable") ?? false;
 
 		const nsp:string = config.get("activeServer") ?? "";
-		const user:string = config.get("username") ?? "admin";
 		const port:string =  config.get("port") ?? "443";
 
-		if (nsp !== this.nspAddr || user !== this.username || port !== this.port) {
+		if (nsp !== this.nspAddr || port !== this.port) {
 			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr);
 			this._revokeAuthToken();
 			this.nspAddr = nsp;
-			this.username = user;
 			this.port = port;
 			this.nspVersion = undefined;
 		}
-
 		this.intentTypes = {};
 		vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
 	}
