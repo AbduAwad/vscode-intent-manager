@@ -63,6 +63,7 @@ See release changes in Changelog.
 
 * [Alejandro Aguado](mailto:alejandro.aguado_martin@nokia.com)
 * [Sven Wisotzky](mailto:sven.wisotzky@nokia.com)
+* [Abdulrahman Awad](mailto:abdulrahmansawad@gmail.com)
 
 ## Important links
 

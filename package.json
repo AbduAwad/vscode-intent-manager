@@ -216,12 +216,12 @@
             "description": "NSP Server entry",
             "properties": {
               "id": {
-                "type": "string",
-                "uniqueItems": true
+                "type": "string"
               },
               "host": {
                 "description": "NSP server ip address or hostname",
-                "type": "string"
+                "type": "string",
+                "uniqueItems": true
               }
             }
           }
