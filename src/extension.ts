@@ -31,6 +31,10 @@ export function activate(context: vscode.ExtensionContext) {
 	const secretStorage : vscode.SecretStorage = context.secrets;
 	const imProvider = new IntentManagerProvider(context);
 
+	// Beginning of implementation for status bar for either Intent Manager or Workflow Manager:
+	const isStatusBarEnabledIM = config.get("intentManager.isStatusBar");
+	const isStatusBarEnabledWFM = config.get("workflowManager.isStatusBar");
+
 	// NSP - Multiple Server Support:
 	const statusbar_server = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 90);
 	statusbar_server.command = 'nokia-wfm.setServer';

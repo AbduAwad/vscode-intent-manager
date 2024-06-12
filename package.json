@@ -259,6 +259,13 @@
           "scope": "application",
           "default": false,
           "description": "Enable parallel intent operations (EXPERIMENTAL)"
+        },
+        "workflowManager.isStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Flag to check if status bar is enabled or not",
+          "readOnly": true
         }
       }
     }
