@@ -7,12 +7,28 @@ import { privateEncrypt } from 'crypto';
 
 export function activate(context: vscode.ExtensionContext) {
 
-	const workflowManagerconfig = vscode.workspace.getConfiguration('workflowManager');
+	// ensure alignement of NSP servers between Intent Manager and Workflow Manager upon activation
+	let imConfig = vscode.workspace.getConfiguration('intentManager');
+	let wfmConfig = vscode.workspace.getConfiguration('workflowManager');
+
+	if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
+		let servers = wfmConfig.get("NSPS") ?? {};
+		imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
+	}
+
+	if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
+		let server = wfmConfig.get("activeServer"); // update the active server:
+		imConfig.update("activeServer", server, vscode.ConfigurationTarget.Global);
+	}
+
+	if (imConfig.get("username") != wfmConfig.get("username")) {
+		let username = wfmConfig.get("username"); // update the username:
+		imConfig.update("username", username, vscode.ConfigurationTarget.Global);
+	}
 
 	const config = vscode.workspace.getConfiguration('intentManager');
 	const addr : string = config.get("activeServer") ?? "";
 	const secretStorage : vscode.SecretStorage = context.secrets;
-
 	const imProvider = new IntentManagerProvider(context);
 
 	context.subscriptions.push(vscode.workspace.registerFileSystemProvider('im', imProvider, { isCaseSensitive: true }));
@@ -78,8 +94,11 @@ export function activate(context: vscode.ExtensionContext) {
 				let server = wfmConfig.get("activeServer"); // update the active server:
 				imConfig.update("activeServer", server, vscode.ConfigurationTarget.Global);
 			}
-			// reload the window
-			vscode.commands.executeCommand('workbench.action.reloadWindow');
+			if (imConfig.get("username") != wfmConfig.get("username")) {
+				let username = wfmConfig.get("username"); // update the username:
+				imConfig.update("username", username, vscode.ConfigurationTarget.Global);
+			}
+			imProvider.updateSettings();
 		}
 		
 	}));

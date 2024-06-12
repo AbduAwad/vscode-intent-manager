@@ -518,6 +518,19 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 			vscode.window.showWarningMessage(errmsg);
 	}
 
+	/**
+	 * Custom implementation of remove an object from an array by id.
+	 * @param {Array} arr Array to remove object from
+	 * @param {string} id ID of object to remove
+	**/
+	private removeObjectByIp(arr, id) {
+		let index = arr.findIndex(obj => obj.ip === id);
+		if (index !== -1) {
+			arr.splice(index, 1);
+		}
+		return arr;	
+	}
+
 	// --- SECTION: vscode.FileSystemProvider implementation ----------------
 
 	/**
@@ -1319,6 +1332,10 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 				const id = await vscode.window.showInputBox({ prompt: 'Enter an identifier for your NSP' });
 				const ip = await vscode.window.showInputBox({ prompt: 'Enter NSP IP Address' });
 				
+				if (!id || !ip) {
+					throw new Error('Invalid input');
+				}
+
 				let server = {id: '', ip: ''};
 				server['id'] = id;
 				server['ip'] = ip;
@@ -1346,11 +1363,10 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 						} else {
 							throw new Error("No IP address found in the input string");
 						}
-						const index = servers.indexOf(ip);
 						await vscode.window.showWarningMessage('Are you sure you want to remove ' + selection[0].label + '?', 'Yes', 'No').then(async (value) => {
 							if (value === 'Yes') {
-								servers.splice(index, 1); // remove the server
-								await config.update('servers', servers, vscode.ConfigurationTarget.Global);
+								test_servers = this.removeObjectByIp(test_servers, ip);
+						await config.update('NSPS', test_servers, vscode.ConfigurationTarget.Global);
 								vscode.window.showWarningMessage('Server: ' + ip + ' removed');
 								return;
 							}
@@ -1415,6 +1431,8 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		});
 	}
 
+
+				
 	/**
 	 * Update IntentManagerProvider after configuration changes
 	 * 
