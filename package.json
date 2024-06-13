@@ -16,7 +16,7 @@
     "onFileSystem:im",
     "onStartupFinished"
   ],
-  "main": "./dist/main.js",
+  "main": "./out/extension.js",
   "contributes": {
     "snippets": [
       {
@@ -222,7 +222,7 @@
           "markdownDescription": "List of NSP servers for workspace",
           "scope": "window",
           "type": "array",
-          "items":{
+          "items": {
             "type": "object",
             "description": "NSP Server entry",
             "properties": {

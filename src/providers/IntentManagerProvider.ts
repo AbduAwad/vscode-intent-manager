@@ -1,11 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 
-// @ts-expect-error module node-fetch does not have a declaration file
 import fetch = require('node-fetch');
-// @ts-expect-error module node-fetch does not have a declaration file
 import base64 = require('base-64');
-// @ts-expect-error module nunjucks does not have a declaration file
 import nunjucks = require('nunjucks');
 
 const DECORATION_WORKSPACE: vscode.FileDecoration = new vscode.FileDecoration(
@@ -1449,7 +1446,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 
 			console.log('ip: ', ip)
 			if (await secretStorage.get(ip + '_username') != undefined && await secretStorage.get(ip + '_password') != undefined) {
-				await config.update('activeServer', ip, vscode.ConfigurationTarget.Global);
+				await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 				vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
 				this.updateSettings();
 				if (selection[0]) {
@@ -1471,7 +1468,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 				if (await this.validateNSPCredentials(ip, usernameInput, passwordInput)) {
 					secretStorage.store(ip + '_username', usernameInput);
 					secretStorage.store(ip + '_password', passwordInput);
-					await config.update('activeServer', ip, vscode.ConfigurationTarget.Global);
+					await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 					if (selection[0]) {
 						statusbar_server.text = 'NSP: ' + ip;
 						quickPick.hide();
@@ -1506,7 +1503,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		const port:string =  config.get("port") ?? "443";
 
 		if (nsp !== this.nspAddr || port !== this.port) {
-			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr);
+			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr)
 			this._revokeAuthToken();
 			this.nspAddr = nsp;
 			this.port = port;
@@ -1514,6 +1511,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		}
 		this.intentTypes = {};
 		vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+
 	}
 
 	/**

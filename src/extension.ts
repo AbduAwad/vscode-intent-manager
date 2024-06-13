@@ -16,6 +16,15 @@ export function activate(context: vscode.ExtensionContext) {
 	let imConfig = vscode.workspace.getConfiguration('intentManager');
 	let wfmConfig = vscode.workspace.getConfiguration('workflowManager');
 
+	// how to get the config from a certain workspace:
+	let imc = vscode.workspace.getConfiguration('intentManager', vscode.window.activeTextEditor?.document.uri);
+	console.log('imc: ', imc);
+	console.log('imc NSPS: ', imc.get("NSPS"));
+	console.log('imc activeServer: ', imc.get("activeServer"));
+	let wfmc = vscode.workspace.getConfiguration('workflowManager', vscode.window.activeTextEditor?.document.uri);
+	console.log('wfmc: ', wfmc);
+	console.log('wfmc NSPS: ', wfmc.get("NSPS"));
+	console.log('wfmc activeServer: ', wfmc.get("activeServer"));
 	if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
 		let servers = wfmConfig.get("NSPS") ?? {};
 		imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
@@ -62,7 +71,6 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	vscode.commands.registerCommand('nokia-intent-manager.setPassword', async () => {
 		const passwordInput: string = await vscode.window.showInputBox({password: true, title: "Password"}) ?? '';
-		
 		if(passwordInput !== '') {
 			secretStorage.store(addr + '_password', passwordInput);
 		}
@@ -117,6 +125,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.languages.registerCodeLensProvider({scheme: 'im'}, imProvider));
 
 	const fileAssociations : {[key: string]: string} = vscode.workspace.getConfiguration('files').get('associations') || {};
+	fileAssociations["/*_v*/views/*"] = "json";
+	vscode.workspace.getConfiguration('files').update('associations', fileAssociations);
+	
 	// --- Set Workflow Manager NSP Server when the user clicks the server button
 	context.subscriptions.push(vscode.commands.registerCommand('nokia-wfm.setServer', async () => {
 		let updatedConfig = vscode.workspace.getConfiguration('intentManager');
@@ -124,10 +135,8 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	}));
 
-	context.subscriptions.push
-	let fileAssociations : {[key: string]: string} = vscode.workspace.getConfiguration('files').get('associations') || {};
-	fileAssociations["/*_v*/views/*"] = "json";
-	vscode.workspace.getConfiguration('files').update('associations', fileAssociations);
+
+
 
 	vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.length : 0, null, { uri: vscode.Uri.parse('im:/'), name: "Intent Manager" });
 }

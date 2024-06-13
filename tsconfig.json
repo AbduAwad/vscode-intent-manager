@@ -10,9 +10,5 @@
 		"rootDir": "src",
 		"strict": false, // Disable all strict type-checking compiler options
 		"noImplicitAny": false, // added so error/warning: Parameter 'xxx' implicitly has an 'any' type is removed.
-		/* Additional Checks */
-		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
-		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
-		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	}
 }
