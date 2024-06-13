@@ -54,10 +54,11 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.openInBrowser', async (...args) => imProvider.openInBrowser(args)));
 	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.newIntent',     async (...args) => imProvider.newIntent(args)));
 
-	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.uploadLocal',   async (...args) => imProvider.uploadLocal(args)));
-	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.clone',         async (...args) => imProvider.clone(args)));
-	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.newVersion',    async (...args) => imProvider.newVersion(args)));
-	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.newIntentType', async (...args) => imProvider.newIntentTypeFromTemplate(args)));
+	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.uploadIntentType', async (...args) => imProvider.uploadIntentType(args)));
+	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.uploadIntents',    async (...args) => imProvider.uploadIntents(args)));
+	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.clone',            async (...args) => imProvider.clone(args)));
+	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.newVersion',       async (...args) => imProvider.newVersion(args)));
+	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.newIntentType',    async (...args) => imProvider.newIntentTypeFromTemplate(args)));
 	
 	vscode.commands.registerCommand('nokia-intent-manager.setPassword', async () => {
 		const passwordInput: string = await vscode.window.showInputBox({password: true, title: "Password"}) ?? '';
@@ -69,7 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	function updateStatusBarItem(){
 		const editor = vscode.window.activeTextEditor;
-		let sbar = imProvider.getStatusBarItem();
+		const sbar = imProvider.getStatusBarItem();
 
 		if (editor) {
 			const document = editor.document;
@@ -115,6 +116,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(imProvider.getStatusBarItem());
 	context.subscriptions.push(vscode.languages.registerCodeLensProvider({scheme: 'im'}, imProvider));
 
+	const fileAssociations : {[key: string]: string} = vscode.workspace.getConfiguration('files').get('associations') || {};
 	// --- Set Workflow Manager NSP Server when the user clicks the server button
 	context.subscriptions.push(vscode.commands.registerCommand('nokia-wfm.setServer', async () => {
 		let updatedConfig = vscode.workspace.getConfiguration('intentManager');
@@ -125,8 +127,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push
 	let fileAssociations : {[key: string]: string} = vscode.workspace.getConfiguration('files').get('associations') || {};
 	fileAssociations["/*_v*/views/*"] = "json";
-	fileAssociations["/*_v*/intents/*"] = "json";
 	vscode.workspace.getConfiguration('files').update('associations', fileAssociations);
-	  
+
 	vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.length : 0, null, { uri: vscode.Uri.parse('im:/'), name: "Intent Manager" });
 }
