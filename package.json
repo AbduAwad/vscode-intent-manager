@@ -16,7 +16,7 @@
     "onFileSystem:im",
     "onStartupFinished"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/main.js",
   "contributes": {
     "snippets": [
       {
@@ -25,6 +25,11 @@
       }
     ],
     "commands": [
+      {
+        "command": "nokia-intent-manager.setServer",
+        "title": "Set IM Extension NSP Server",
+        "category": "IntentManager"
+      },
       {
         "command": "nokia-intent-manager.audit",
         "category": "IntentManager",

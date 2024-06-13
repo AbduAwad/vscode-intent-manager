@@ -1490,24 +1490,32 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	 * 
 	 */	
 
-	public updateSettings() {
+	public async updateSettings() {
 		this.pluginLogs.info("Updating IntentManagerProvider after configuration change");
 
-		const config = vscode.workspace.getConfiguration('intentManager');
+		const is_standard_port = await vscode.window.showInformationMessage('WFM: Use standard port?', 'Yes', 'No');
+		if (is_standard_port == 'Yes') {
+			vscode.window.showInformationMessage('Connecting to NSP: ' + vscode.workspace.getConfiguration('intentManager').get("activeServer") + ' on standard port');
+		} else {
+			let port = await vscode.window.showInputBox({ prompt: 'Enter NSP Port...' });
+			const config = vscode.workspace.getConfiguration('workflowManager');
+			config.update('port', port, vscode.ConfigurationTarget.Workspace);
+		}
 
+		const config = vscode.workspace.getConfiguration('intentManager');
 		this.timeout = config.get("timeout") ?? 90000; // default: 3min
 		this.fileIgnore = config.get("ignoreLabels") ?? [];
 		this.parallelOps = config.get("parallelOperations.enable") ?? false;
-
 		const nsp:string = config.get("activeServer") ?? "";
 		const port:string =  config.get("port") ?? "443";
+
 
 		if (nsp !== this.nspAddr || port !== this.port) {
 			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr)
 			this._revokeAuthToken();
 			this.nspAddr = nsp;
 			this.port = port;
-			this.nspVersion = undefined;
+			await this._getNSPversion();
 		}
 		this.intentTypes = {};
 		vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
