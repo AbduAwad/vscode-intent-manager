@@ -1493,13 +1493,16 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	public async updateSettings() {
 		this.pluginLogs.info("Updating IntentManagerProvider after configuration change");
 
-		const is_standard_port = await vscode.window.showInformationMessage('WFM: Use standard port?', 'Yes', 'No');
-		if (is_standard_port == 'Yes') {
-			vscode.window.showInformationMessage('Connecting to NSP: ' + vscode.workspace.getConfiguration('intentManager').get("activeServer") + ' on standard port');
-		} else {
-			let port = await vscode.window.showInputBox({ prompt: 'Enter NSP Port...' });
-			const config = vscode.workspace.getConfiguration('workflowManager');
-			config.update('port', port, vscode.ConfigurationTarget.Workspace);
+		const portConfig = vscode.workspace.getConfiguration('intentManager');
+		if (portConfig.get('port') === "" && portConfig.get('standardPort') === false) {
+			let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
+			if (is_standard_port == 'Yes') {
+				vscode.window.showInformationMessage('Connecting to NSP: ' + vscode.workspace.getConfiguration('intentManager').get("activeServer") + ' on standard port');
+			} else {
+				let port = await vscode.window.showInputBox({ prompt: 'Enter NSP Port...' });
+				const config = vscode.workspace.getConfiguration('intentManager');
+				config.update('port', port, vscode.ConfigurationTarget.Workspace);
+			}
 		}
 
 		const config = vscode.workspace.getConfiguration('intentManager');
