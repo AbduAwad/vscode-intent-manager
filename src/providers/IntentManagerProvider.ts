@@ -96,7 +96,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		const config = vscode.workspace.getConfiguration('intentManager');
 		this.nspAddr = config.get("activeServer") ?? "";
 		this.secretStorage = context.secrets;
-		this.port = config.get("port") ?? "443";
+		this.port = config.get("port");
 		this.timeout = config.get("timeout") ?? 90000;
 		this.fileIgnore = config.get("ignoreLabels") ?? [];
 		this.parallelOps = config.get("parallelOperations.enable") ?? false;
@@ -141,6 +141,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	 */	
 
 	private async _getAuthToken(): Promise<void> {
+		console.log('executing getAuthToken()');
         if (this.authToken) {
             if (!(await this.authToken)) {
                 this.authToken = undefined;
@@ -380,6 +381,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	 */	
 
 	private async _getNSPversion(): Promise<void> {
+		console.log("Executing getNSPversion()");
 		this.pluginLogs.info("Requesting NSP version");
 		const url = "https://"+this.nspAddr+"/internal/shared-app-banner-utils/rest/api/v1/appBannerUtils/release-version";
 
@@ -1338,11 +1340,10 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	// --- SECTION: IntentManagerProvider specific public methods implementation ---
 
 	async setServer(config: vscode.WorkspaceConfiguration, statusbar_server: vscode.StatusBarItem, secretStorage: vscode.SecretStorage): Promise<void> {
-		
-		console.log('config: ', config);
+	
 		console.log("Executing setServer()");
+		console.log('here: ')
 		let test_servers : Array<{id: string, ip: string}> = config.get("NSPS") ?? [];
-		// test servers is a list of server objects with keys id and ip I want to append that to a server list of strings:
 		let servers = []
 		test_servers.forEach(function (server) {
 			servers.push(server.id + " | " + server.ip);
@@ -1448,7 +1449,19 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 			if (await secretStorage.get(ip + '_username') != undefined && await secretStorage.get(ip + '_password') != undefined) {
 				await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 				vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
-				this.updateSettings();
+				const portConfig = vscode.workspace.getConfiguration('intentManager');
+				let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
+				if (is_standard_port == 'Yes') {
+					portConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
+					portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+					vscode.window.showInformationMessage('Connecting to NSP: ' + vscode.workspace.getConfiguration('intentManager').get("activeServer") + ' on standard port');
+				} else {
+					// show a notification to enter the port in the settings, currently setting it is not working as inputs from both extensions are ovveriding each other
+					vscode.window.showInformationMessage('Enter port for WFM in settings');
+					portConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+				}
+				
+				await this.updateSettings();
 				if (selection[0]) {
 					statusbar_server.text = 'NSP: ' + ip;
 					quickPick.hide();
@@ -1468,13 +1481,30 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 				if (await this.validateNSPCredentials(ip, usernameInput, passwordInput)) {
 					secretStorage.store(ip + '_username', usernameInput);
 					secretStorage.store(ip + '_password', passwordInput);
+					console.log('we got here')
 					await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
+					console.log('we got here')
+					const portConfig = vscode.workspace.getConfiguration('intentManager');
+					let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
+					if (is_standard_port == 'Yes') {
+						portConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
+						portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+						vscode.window.showInformationMessage('Connecting to NSP: ' + vscode.workspace.getConfiguration('intentManager').get("activeServer") + ' on standard port');
+					} else {
+						// show a notification to enter the port in the settings, currently setting it is not working as inputs from both extensions are ovveriding each other
+						vscode.window.showInformationMessage('Enter port for WFM in settings');
+						portConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+					}
+
 					if (selection[0]) {
 						statusbar_server.text = 'NSP: ' + ip;
 						quickPick.hide();
 						quickPick.dispose();
 					}
 					vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
+					// reset the port config if they selected a new server:
+					await config.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+					await config.update('port', '', vscode.ConfigurationTarget.Workspace);
 					await this.updateSettings();
 				} else {
 					vscode.window.showErrorMessage('Invalid Credentials');
@@ -1488,31 +1518,20 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	/**
 	 * Update IntentManagerProvider after configuration changes
 	 * 
-	 */	
+	*/	
 
 	public async updateSettings() {
+		console.log('updating settings');
 		this.pluginLogs.info("Updating IntentManagerProvider after configuration change");
 
-		const portConfig = vscode.workspace.getConfiguration('intentManager');
-		if (portConfig.get('port') === "" && portConfig.get('standardPort') === false) {
-			let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
-			if (is_standard_port == 'Yes') {
-				vscode.window.showInformationMessage('Connecting to NSP: ' + vscode.workspace.getConfiguration('intentManager').get("activeServer") + ' on standard port');
-			} else {
-				let port = await vscode.window.showInputBox({ prompt: 'Enter NSP Port...' });
-				const config = vscode.workspace.getConfiguration('intentManager');
-				config.update('port', port, vscode.ConfigurationTarget.Workspace);
-			}
-		}
-
+		console.log('we are here')
 		const config = vscode.workspace.getConfiguration('intentManager');
 		this.timeout = config.get("timeout") ?? 90000; // default: 3min
 		this.fileIgnore = config.get("ignoreLabels") ?? [];
 		this.parallelOps = config.get("parallelOperations.enable") ?? false;
 		const nsp:string = config.get("activeServer") ?? "";
-		const port:string =  config.get("port") ?? "443";
-
-
+		const port:string = config.get("port");
+		console.log('we are here 2')
 		if (nsp !== this.nspAddr || port !== this.port) {
 			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr)
 			this._revokeAuthToken();
@@ -1520,9 +1539,9 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 			this.port = port;
 			await this._getNSPversion();
 		}
+		console.log('we are here 3')
 		this.intentTypes = {};
-		vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
-
+		vscode.commands.executeCommand('workbench.files.action.reloadWindow');
 	}
 
 	/**
@@ -1531,7 +1550,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	 * @param {vscode.Uri} uri URI of an intent instance
 	 * 
 	 */		
-
 	public getState(uri: vscode.Uri): string {
 		const path = uri.toString();
 		this.pluginLogs.debug("getState("+path+")");

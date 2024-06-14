@@ -16,7 +16,7 @@
     "onFileSystem:im",
     "onStartupFinished"
   ],
-  "main": "./dist/main.js",
+  "main": "./out/extension.js",
   "contributes": {
     "snippets": [
       {
@@ -250,16 +250,7 @@
         },
         "intentManager.port": {
           "type": "string",
-          "default": "8545",
           "scope": "window",
-          "enum": [
-            "443",
-            "8545"
-          ],
-          "enumDescriptions": [
-            "443 port enabled in newer releases of NSP. 8545 to be deprecated.",
-            "8545 used in older NSP releases, to be deprecated."
-          ],
           "description": "NSP IM port."
         },
         "intentManager.timeout": {
@@ -281,20 +272,29 @@
           "scope": "application",
           "default": false,
           "description": "Enable parallel intent operations (EXPERIMENTAL)"
+        },
+        "intentManager.isStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Flag to check if status bar is enabled or not",
+          "readOnly": true
         }
       }
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run esbuild -- --minify",
-    "compile": "tsc -p ./ --sourceMap",
-    "lint": "eslint \"src/**/*.ts\"",
-    "clean": "rm -rf node_modules out",
-    "watch": "tsc -watch -p ./",
-    "build": "tsc",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/main.js --external:vscode --format=cjs --platform=node --packages=external",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "build": "./node_modules/typescript/bin/tsc",
+    "compile": "./node_modules/typescript/bin/tsc -p ./",
+    "watch": "./node_modules/typescript/bin/tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --packages=external",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
     "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-    "esbuild": "npm run esbuild-base -- --sourcemap"
+    "test-compile": "./node_modules/typescript/bin/tsc -p ./"
   },
   "devDependencies": {
     "@types/node": "18.x",

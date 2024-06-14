@@ -16,33 +16,38 @@ export function activate(context: vscode.ExtensionContext) {
 	let imConfig = vscode.workspace.getConfiguration('intentManager');
 	let wfmConfig = vscode.workspace.getConfiguration('workflowManager');
 
-	// NSP - Multiple Server Support:
 	const statusbar_server = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 90);
 	statusbar_server.command = 'nokia-intent-manager.setServer';
 	statusbar_server.tooltip = 'Set Intent-Manager NSP Server';
-	statusbar_server.text = 'NSP: ' + imConfig.get('activeServer') ?? 'Select Server';
-	statusbar_server.show();
+	statusbar_server.text = 'NSP: ' + imConfig.get('activeServer');
 	
+	if (wfmConfig.get("isStatusBar") == true) {
+		statusbar_server.hide();
+		imConfig.update("isStatusBar", false, vscode.ConfigurationTarget.Global);
+	} else {
+		statusbar_server.show();
+		imConfig.update("isStatusBar", true, vscode.ConfigurationTarget.Global);
+	}
+
 	if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
 		let servers = wfmConfig.get("NSPS") ?? {};
 		imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
 	}
-
 	if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
 		let server = wfmConfig.get("activeServer"); // update the active server on the current window only:
 		imConfig.update("activeServer", server, vscode.ConfigurationTarget.Workspace);
 		statusbar_server.text = 'NSP: ' + server;
 	}
-
+	if (wfmConfig.get("standardPort") == true) {
+		imConfig.update("standarPort", true, vscode.ConfigurationTarget.Workspace);
+	}
+	if (wfmConfig.get("standardPort") == false) {
+		imConfig.update("standarPort", false, vscode.ConfigurationTarget.Workspace);
+	}
 	const config = vscode.workspace.getConfiguration('intentManager');
 	const addr : string = config.get("activeServer") ?? "";
 	const secretStorage : vscode.SecretStorage = context.secrets;
 	const imProvider = new IntentManagerProvider(context);
-
-	// Beginning of implementation for status bar for either Intent Manager or Workflow Manager:
-	const isStatusBarEnabledIM = config.get("intentManager.isStatusBar");
-	const isStatusBarEnabledWFM = config.get("workflowManager.isStatusBar");
-
 
 	context.subscriptions.push(vscode.workspace.registerFileSystemProvider('im', imProvider, { isCaseSensitive: true }));
 	context.subscriptions.push(vscode.window.registerFileDecorationProvider(imProvider));
@@ -91,11 +96,16 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (e) => {
-		console.log("Configuration changed")
+		console.log("Configuration changed");
+		console.log('e.affectsConfiguration(intentManager): ', e.affectsConfiguration('intentManager'))
+		console.log('e.affectsConfiguration(workflowManager): ', e.affectsConfiguration('workflowManager'))
+	
 		if (e.affectsConfiguration('intentManager')) {
+			console.log("Intent Manager configuration changed")
 			imProvider.updateSettings(); // config has changed
 		}
 		if (e.affectsConfiguration('workflowManager')) {
+			console.log("Workflow Manager configuration changed");
 			const wfmConfig = vscode.workspace.getConfiguration('workflowManager'); // update intenet Manager NSP's:
 			let imConfig = vscode.workspace.getConfiguration('intentManager');
 			if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
@@ -107,6 +117,13 @@ export function activate(context: vscode.ExtensionContext) {
 				let server = wfmConfig.get("activeServer"); // update the active server:
 				imConfig.update("activeServer", server, vscode.ConfigurationTarget.Workspace);
 				statusbar_server.text = 'NSP: ' + server;
+			}
+			if (wfmConfig.get("standardPort") == true) {
+				imConfig.update("standarPort", true, vscode.ConfigurationTarget.Workspace);
+				imConfig.update("port", "", vscode.ConfigurationTarget.Workspace);
+			}
+			if (wfmConfig.get("standardPort") == false) {
+				imConfig.update("standarPort", false, vscode.ConfigurationTarget.Workspace);
 			}
 			imProvider.updateSettings();
 		}
