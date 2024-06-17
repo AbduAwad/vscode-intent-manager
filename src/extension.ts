@@ -18,15 +18,23 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const statusbar_server = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 90);
 	statusbar_server.command = 'nokia-intent-manager.setServer';
-	statusbar_server.tooltip = 'Set Intent-Manager NSP Server';
+	statusbar_server.tooltip = 'Set NSP Server';
 	statusbar_server.text = 'NSP: ' + imConfig.get('activeServer');
-	
-	if (wfmConfig.get("isStatusBar") == true) {
-		statusbar_server.hide();
-		imConfig.update("isStatusBar", false, vscode.ConfigurationTarget.Global);
-	} else {
+
+	// Ensure the status bar is in the correct state on activation
+	if (context.globalState.get('isStatusBar', false)) {
 		statusbar_server.show();
-		imConfig.update("isStatusBar", true, vscode.ConfigurationTarget.Global);
+		context.globalState.update('isStatusBar', true);
+	} else {
+		statusbar_server.hide();
+		context.globalState.update('isStatusBar', false);
+	}
+
+	// Ensure the status bar is in the correct state on activation
+	if (context.globalState.get('isStatusBar', false)) {
+		statusbar_server.show();
+	} else {
+		statusbar_server.hide();
 	}
 
 	if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
@@ -44,6 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (wfmConfig.get("standardPort") == false) {
 		imConfig.update("standarPort", false, vscode.ConfigurationTarget.Workspace);
 	}
+
 	const config = vscode.workspace.getConfiguration('intentManager');
 	const addr : string = config.get("activeServer") ?? "";
 	const secretStorage : vscode.SecretStorage = context.secrets;
