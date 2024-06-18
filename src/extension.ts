@@ -22,12 +22,11 @@ export function activate(context: vscode.ExtensionContext) {
 	statusbar_server.text = 'NSP: ' + imConfig.get('activeServer');
 
 	// Ensure the status bar is in the correct state on activation
-	if (context.globalState.get('isStatusBar', false)) {
+	if (context.globalState.get('isStatusBar') != true)  {
 		statusbar_server.show();
 		context.globalState.update('isStatusBar', true);
 	} else {
 		statusbar_server.hide();
-		context.globalState.update('isStatusBar', false);
 	}
 
 	// Ensure the status bar is in the correct state on activation
