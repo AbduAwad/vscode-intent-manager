@@ -1521,17 +1521,14 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	*/	
 
 	public async updateSettings() {
-		console.log('updating settings');
 		this.pluginLogs.info("Updating IntentManagerProvider after configuration change");
 
-		console.log('we are here')
 		const config = vscode.workspace.getConfiguration('intentManager');
 		this.timeout = config.get("timeout") ?? 90000; // default: 3min
 		this.fileIgnore = config.get("ignoreLabels") ?? [];
 		this.parallelOps = config.get("parallelOperations.enable") ?? false;
 		const nsp:string = config.get("activeServer") ?? "";
 		const port:string = config.get("port");
-		console.log('we are here 2')
 		if (nsp !== this.nspAddr || port !== this.port) {
 			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr)
 			this._revokeAuthToken();
@@ -1539,9 +1536,8 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 			this.port = port;
 			await this._getNSPversion();
 		}
-		console.log('we are here 3')
 		this.intentTypes = {};
-		vscode.commands.executeCommand('workbench.files.action.reloadWindow');
+		vscode.commands.executeCommand('workbench.files.action.refreshFilesExplorer');
 	}
 
 	/**
