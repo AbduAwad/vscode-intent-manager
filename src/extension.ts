@@ -47,6 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 	if (wfmConfig.get("standardPort") == true) {
 		imConfig.update("standarPort", true, vscode.ConfigurationTarget.Workspace);
+		imConfig.update("port", "", vscode.ConfigurationTarget.Workspace);
 	}
 	if (wfmConfig.get("standardPort") == false) {
 		imConfig.update("standarPort", false, vscode.ConfigurationTarget.Workspace);
@@ -131,7 +132,7 @@ export function activate(context: vscode.ExtensionContext) {
 				imConfig.update("port", "", vscode.ConfigurationTarget.Workspace);
 			}
 			if (wfmConfig.get("standardPort") == false) {
-				imConfig.update("standarPort", false, vscode.ConfigurationTarget.Workspace);
+				await imConfig.update("standarPort", false, vscode.ConfigurationTarget.Workspace);
 			}
 			imProvider.updateSettings();
 		}

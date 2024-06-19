@@ -1445,66 +1445,54 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 				throw new Error("No IP address found in the input string");
 			}
 
-			console.log('ip: ', ip)
-			if (await secretStorage.get(ip + '_username') != undefined && await secretStorage.get(ip + '_password') != undefined) {
-				await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
-				vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
+			if (await secretStorage.get(ip + '_username') != undefined && await secretStorage.get(ip + '_password') != undefined) {	
+				
 				const portConfig = vscode.workspace.getConfiguration('intentManager');
+				const wfmConfig = vscode.workspace.getConfiguration('workflowManager');
 				let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
 				if (is_standard_port == 'Yes') {
 					portConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
 					portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-					vscode.window.showInformationMessage('Connecting to NSP: ' + vscode.workspace.getConfiguration('intentManager').get("activeServer") + ' on standard port');
+					wfmConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
+					wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+					await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 				} else {
-					// show a notification to enter the port in the settings, currently setting it is not working as inputs from both extensions are ovveriding each other
-					vscode.window.showInformationMessage('Enter port for WFM in settings');
-					portConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+					await this.updatePort();	
+					await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);				
 				}
-				
-				await this.updateSettings();
 				if (selection[0]) {
 					statusbar_server.text = 'NSP: ' + ip;
 					quickPick.hide();
 					quickPick.dispose();
 				}
+				vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
+				await this.updateSettings();
 			} else { // If the username and password are not cached, prompt the user for the username and password
-				const usernameInput: string = await vscode.window.showInputBox({
-					prompt: 'Enter Username...',
-				}) ?? '';
+				const usernameInput: string = await vscode.window.showInputBox({ prompt: 'Enter Username...'}) ?? '';
+				const passwordInput: string = await vscode.window.showInputBox({ password: true, prompt: 'Enter Password...'}) ?? '';
 
-				const passwordInput: string = await vscode.window.showInputBox({
-					password: true, 
-					prompt: 'Enter Password...'
-				}) ?? '';
-
-				console.log(await this.validateNSPCredentials(ip, usernameInput, passwordInput));
 				if (await this.validateNSPCredentials(ip, usernameInput, passwordInput)) {
 					secretStorage.store(ip + '_username', usernameInput);
 					secretStorage.store(ip + '_password', passwordInput);
-					console.log('we got here')
-					await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
-					console.log('we got here')
 					const portConfig = vscode.workspace.getConfiguration('intentManager');
+					const wfmConfig = vscode.workspace.getConfiguration('workflowManager');
 					let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
 					if (is_standard_port == 'Yes') {
 						portConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
 						portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-						vscode.window.showInformationMessage('Connecting to NSP: ' + vscode.workspace.getConfiguration('intentManager').get("activeServer") + ' on standard port');
+						wfmConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
+						wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+						await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 					} else {
-						// show a notification to enter the port in the settings, currently setting it is not working as inputs from both extensions are ovveriding each other
-						vscode.window.showInformationMessage('Enter port for WFM in settings');
-						portConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+						await this.updatePort();	
+						await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);			
 					}
-
 					if (selection[0]) {
 						statusbar_server.text = 'NSP: ' + ip;
 						quickPick.hide();
 						quickPick.dispose();
 					}
 					vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
-					// reset the port config if they selected a new server:
-					await config.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
-					await config.update('port', '', vscode.ConfigurationTarget.Workspace);
 					await this.updateSettings();
 				} else {
 					vscode.window.showErrorMessage('Invalid Credentials');
@@ -1513,6 +1501,21 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		});
 	}
 
+	public async updatePort() {
+		const portConfig = vscode.workspace.getConfiguration('intentManager');
+		const wfmConfig = vscode.workspace.getConfiguration('workflowManager');
+
+		let imPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Intent Manager...' });
+		await portConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+		await portConfig.update('port', imPort, vscode.ConfigurationTarget.Workspace);
+
+		if (wfmConfig != undefined) {
+			let wfmPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Workflow Manager...' });
+			await wfmConfig.update('port', wfmPort, vscode.ConfigurationTarget.Workspace);
+			await wfmConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+		}
+		await this.updateSettings();
+	}
 
 				
 	/**
