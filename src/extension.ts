@@ -105,9 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (e) => {
-		console.log("Configuration changed");
-		console.log('e.affectsConfiguration(intentManager): ', e.affectsConfiguration('intentManager'))
-		console.log('e.affectsConfiguration(workflowManager): ', e.affectsConfiguration('workflowManager'))
+	
 	
 		if (e.affectsConfiguration('intentManager')) {
 			console.log("Intent Manager configuration changed")
@@ -118,7 +116,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const wfmConfig = vscode.workspace.getConfiguration('workflowManager'); // update intenet Manager NSP's:
 			let imConfig = vscode.workspace.getConfiguration('intentManager');
 			if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
-				let servers = wfmConfig.get("NSPS") ?? {};
+				let servers = wfmConfig.get("NSPS") ?? [];
 				console.log('wfmConfig servers: ', servers);
 				imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
 			}
