@@ -1515,8 +1515,9 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 
 		if (wfmConfig.get('port') != undefined && wfmConfig.get('standardPort') != undefined) {
 			let wfmPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Workflow Manager...' });
-			wfmConfig.update('port', wfmPort, vscode.ConfigurationTarget.Workspace);
 			wfmConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+			wfmConfig.update('port', wfmPort, vscode.ConfigurationTarget.Workspace);
+			
 		}
 		await this.updateSettings();
 	}

@@ -21,19 +21,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	statusbar_server.tooltip = 'Set NSP Server';
 	statusbar_server.text = 'NSP: ' + imConfig.get('activeServer');
 
-	// Ensure the status bar is in the correct state on activation
-	if (context.globalState.get('isStatusBar') != true)  {
-		statusbar_server.show();
-		context.globalState.update('isStatusBar', true);
-	} else {
+	const wfmExtension = vscode.extensions.getExtension('Nokia.nokia-wfm');
+	if (wfmExtension.isActive) {
 		statusbar_server.hide();
-	}
-
-	// Ensure the status bar is in the correct state on activation
-	if (context.globalState.get('isStatusBar', false)) {
-		statusbar_server.show();
 	} else {
-		statusbar_server.hide();
+		statusbar_server.show();
 	}
 
 	if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
@@ -156,4 +148,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	}));
 	vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.length : 0, null, { uri: vscode.Uri.parse('im:/'), name: "Intent Manager" });
+}
+
+export function deactivate(context: vscode.ExtensionContext) { // function from its main module to perform cleanup tasks on VS Code shutdow
+   console.log('Deactivating Intent Manager Extension');
 }
