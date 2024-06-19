@@ -129,3 +129,80 @@ Updates:
   after an intent-type was cloned or a new version have been created.
 * New command to upload intents from local system.
 
+## [3.0.0] Multiple Server Support
+
+### Set Server Support Added
+- Users can now connect to multiple NSP servers on different VsCode Windows.
+- The current NSP server connection is displayed in the status bar. This connection is workspace-wide, allowing different VS Code workspaces/windows to connect to different NSP servers.
+- The list of servers is stored in the user's VS Code extension settings, ensuring consistency across multiple windows/sessions (application-wide).
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/statusbar.png" width="450" alt="Status bar showing current NSP server">
+</p>
+
+### Server Selection
+- Clicking the status bar opens a drop-down menu where users can select an NSP server to connect to.
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/servers.png" width="550" alt="Drop-down menu for selecting NSP servers">
+</p>
+
+### Caching of NSP User/Password Credentials
+- After selecting an NSP server, users are prompted to enter a username and password.
+- If the credentials are valid and the connection is successful, the credentials are cached in VS Code Secret Storage.
+- Cached credentials allow automatic reconnection without re-entering credentials.
+- **Note:** Username and password are removed from settings and entered through the quick views, then stored in secret storage.
+
+### NSP Credentials Error-Checking
+- Incorrect credentials prompt an error message and a re-prompt to select a server.
+- If the credentials don't connect to NSP, they are not cached.
+- Authentication token failures also prompt an error message and a re-prompt to select a server.
+
+### Adding NSP Servers
+- Users can add NSP servers by clicking the '+' button in the quick view. This opens an input box for entering the IP address of the NSP server to add.
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/addServer.png" width="550" alt="Input box for adding NSP servers">
+</p>
+
+### Removing NSP Servers
+- Users can remove NSP servers by clicking the '-' button in the quick view. This removes the selected NSP server from the list.
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/removeServer.png" width="550" alt="Option to remove NSP servers">
+</p>
+
+### Reset Username/Password for a Server
+- Users can reset the credentials for an IP they are connected to by clicking the settings icon.
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/resetCredentials.png" width="550" alt="Option to reset credentials">
+</p>
+
+## Updates: NOKIA_WFM and NOKIA_IM Extension NSP Connection
+- Both the WFM and IM extensions connect to the same NSP on a given VS Code workspace (window).
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/multiServer.png" width="400" alt="Port selection for NSP connection">
+</p>
+
+### Set Ports: 
+
+- When an NSP is selected from the dropdown, VS Code prompts the user to choose between a standard port and a non-standard port.
+
+- If yes is selected (standard port), the NSP connection for NOKIA_WFM and NOKIA_IM will use the standard port, and the extensions will be set to no port.
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/port.png" width="550" alt="Port selection for NSP connection">
+</p>
+
+  - If no is selected, the user will be prompted to enter a port for the NOKIA_WFM and the NOKIA_IM NSP connections.
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/IM_PORT.png" width="550" alt="Port selection for NSP connection">
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/WFM_PORT.png" width="550" alt="Port selection for NSP connection">
+</p>
+
