@@ -10,11 +10,11 @@ import * as vscode from 'vscode';
 
 import { IntentManagerProvider } from './providers';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
 	// ensure alignement of NSP servers between Intent Manager and Workflow Manager upon activation
-	let imConfig = vscode.workspace.getConfiguration('intentManager');
-	let wfmConfig = vscode.workspace.getConfiguration('workflowManager');
+	let imConfig = await vscode.workspace.getConfiguration('intentManager');
+	let wfmConfig = await vscode.workspace.getConfiguration('workflowManager');
 
 	const statusbar_server = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 90);
 	statusbar_server.command = 'nokia-intent-manager.setServer';
@@ -37,12 +37,16 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
-		let servers = wfmConfig.get("NSPS") ?? {};
-		imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
+		let servers = wfmConfig.get("NSPS") ?? [];
+		if (imConfig.get("NSPS") != undefined) {
+			imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
+		}
 	}
 	if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
 		let server = wfmConfig.get("activeServer"); // update the active server on the current window only:
-		imConfig.update("activeServer", server, vscode.ConfigurationTarget.Workspace);
+		if (imConfig.get("activeServer") != undefined) {
+			imConfig.update("activeServer", server, vscode.ConfigurationTarget.Workspace);
+		}
 		statusbar_server.text = 'NSP: ' + server;
 	}
 	if (wfmConfig.get("standardPort") == true) {
@@ -130,7 +134,7 @@ export function activate(context: vscode.ExtensionContext) {
 				imConfig.update("port", "", vscode.ConfigurationTarget.Workspace);
 			}
 			if (wfmConfig.get("standardPort") == false) {
-				await imConfig.update("standardPort", false, vscode.ConfigurationTarget.Workspace);
+				imConfig.update("standardPort", false, vscode.ConfigurationTarget.Workspace);
 			}
 			imProvider.updateSettings();
 		}

@@ -1393,7 +1393,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 						await vscode.window.showWarningMessage('Are you sure you want to remove ' + selection[0].label + '?', 'Yes', 'No').then(async (value) => {
 							if (value === 'Yes') {
 								test_servers = this.removeObjectByIp(test_servers, ip);
-						await config.update('NSPS', test_servers, vscode.ConfigurationTarget.Global);
+							    config.update('NSPS', test_servers, vscode.ConfigurationTarget.Global);
 								vscode.window.showWarningMessage('Server: ' + ip + ' removed');
 								return;
 							}
@@ -1453,12 +1453,14 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 				if (is_standard_port == 'Yes') {
 					portConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
 					portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-					wfmConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
-					wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-					await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
+					if (wfmConfig.get('port') != undefined && wfmConfig.get('standardPort') != undefined) {
+						wfmConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
+						wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+					}
+					config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 				} else {
 					await this.updatePort();	
-					await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);				
+					config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);				
 				}
 				if (selection[0]) {
 					statusbar_server.text = 'NSP: ' + ip;
@@ -1480,12 +1482,14 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 					if (is_standard_port == 'Yes') {
 						portConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
 						portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-						wfmConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
-						wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-						await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
+						if (wfmConfig.get('port') != undefined && wfmConfig.get('standardPort') != undefined) {
+							wfmConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
+							wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+						}
+						config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 					} else {
 						await this.updatePort();	
-						await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);			
+						config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);			
 					}
 					if (selection[0]) {
 						statusbar_server.text = 'NSP: ' + ip;
@@ -1506,13 +1510,13 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		const wfmConfig = vscode.workspace.getConfiguration('workflowManager');
 
 		let imPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Intent Manager...' });
-		await portConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
-		await portConfig.update('port', imPort, vscode.ConfigurationTarget.Workspace);
+		portConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+		portConfig.update('port', imPort, vscode.ConfigurationTarget.Workspace);
 
-		if (wfmConfig != undefined) {
+		if (wfmConfig.get('port') != undefined && wfmConfig.get('standardPort') != undefined) {
 			let wfmPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Workflow Manager...' });
-			await wfmConfig.update('port', wfmPort, vscode.ConfigurationTarget.Workspace);
-			await wfmConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
+			wfmConfig.update('port', wfmPort, vscode.ConfigurationTarget.Workspace);
+			wfmConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
 		}
 		await this.updateSettings();
 	}
