@@ -125,8 +125,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	 */	
 
 	dispose() {
-		console.log('disposing IntentManagerProvider()');
-
 		this._revokeAuthToken();
 		this.serverLogs.dispose();
 		this.pluginLogs.dispose();
@@ -141,7 +139,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	 */	
 
 	private async _getAuthToken(): Promise<void> {
-		console.log('executing getAuthToken()');
+		this.pluginLogs.info("executing getAuthToken()")
         if (this.authToken) {
             if (!(await this.authToken)) {
                 this.authToken = undefined;
@@ -344,7 +342,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	*/
 	private async validateNSPCredentials(ip: string, username: string, password: string): Promise<boolean> {
 
-		console.log("Executing validateIpCredentials()");
+		this.pluginLogs.info("Executing validateIpCredentials()");
 		const fetch = require('node-fetch');
 		const base64 = require('base-64');
 		const timeout = new AbortController();
@@ -362,7 +360,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 				body: '{"grant_type": "client_credentials"}',
 				signal: timeout.signal
 			});
-			console.log("POST", url, response.status);
+
 			if (!response.ok) {
 				return false;
 			}
@@ -381,7 +379,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	 */	
 
 	private async _getNSPversion(): Promise<void> {
-		console.log("Executing getNSPversion()");
 		this.pluginLogs.info("Requesting NSP version");
 		const url = "https://"+this.nspAddr+"/internal/shared-app-banner-utils/rest/api/v1/appBannerUtils/release-version";
 
@@ -1341,8 +1338,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 
 	async setServer(config: vscode.WorkspaceConfiguration, statusbar_server: vscode.StatusBarItem, secretStorage: vscode.SecretStorage): Promise<void> {
 	
-		console.log("Executing setServer()");
-		console.log('here: ')
+		this.pluginLogs.info('Executing SetServer()');
 		let test_servers : Array<{id: string, ip: string}> = config.get("NSPS") ?? [];
 		let servers = []
 		test_servers.forEach(function (server) {
@@ -1433,7 +1429,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 
 		quickPick.onDidChangeSelection(async selection => { // when a server is selected
 			
-			console.log('selection: ', selection);
 			let ip = selection[0].label;
 
 			const ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;

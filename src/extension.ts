@@ -104,16 +104,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	
 		if (e.affectsConfiguration('intentManager')) {
-			console.log("Intent Manager configuration changed")
 			imProvider.updateSettings(); // config has changed
 		}
 		if (e.affectsConfiguration('workflowManager')) {
-			console.log("Workflow Manager configuration changed");
 			const wfmConfig = vscode.workspace.getConfiguration('workflowManager'); // update intenet Manager NSP's:
 			let imConfig = vscode.workspace.getConfiguration('intentManager');
 			if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
 				let servers = wfmConfig.get("NSPS") ?? [];
-				console.log('wfmConfig servers: ', servers);
 				imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
 			}
 			if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
@@ -152,4 +149,5 @@ export async function activate(context: vscode.ExtensionContext) {
 
 export function deactivate(context: vscode.ExtensionContext) { // function from its main module to perform cleanup tasks on VS Code shutdow
    console.log('Deactivating Intent Manager Extension');
+   
 }
