@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	statusbar_server.text = 'NSP: ' + imConfig.get('activeServer');
 
 	const wfmExtension = vscode.extensions.getExtension('Nokia.nokia-wfm');
-	if (wfmExtension.isActive) {
+	if (wfmExtension?.isActive) {
 		statusbar_server.hide();
 	} else {
 		statusbar_server.show();
