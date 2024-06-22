@@ -179,7 +179,7 @@ Updates:
     <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/resetCredentials.png" width="550" alt="Option to reset credentials">
 </p>
 
-## Updates: NOKIA_WFM and NOKIA_IM Extension NSP Connection
+### NOKIA_WFM and NOKIA_IM Extension Synchronized NSP Connection
 - Both the WFM and IM extensions connect to the same NSP on a given VS Code workspace (window).
 
 <p align="center">
