@@ -908,7 +908,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 				this.pluginLogs.warn('Unknown intent-type', uri.toString());
 			}
 		}
-	
 		throw vscode.FileSystemError.FileNotFound('Unknown resouce!');
 	}
 
@@ -1533,7 +1532,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		const nsp:string = config.get("activeServer") ?? "";
 		const port:string = config.get("port");
 		if (nsp !== this.nspAddr || port !== this.port) {
-			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr)
+			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr);
 			this._revokeAuthToken();
 			this.nspAddr = nsp;
 			this.port = port;
