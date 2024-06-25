@@ -169,7 +169,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
                     body: '{"grant_type": "client_credentials"}',
                     signal: timeout.signal
                 }).then((response:any) => {
-                    this.pluginLogs.info("POST", url, response.status);
                     if (!response.ok) {
 						vscode.window.showErrorMessage("NSP Authentication Error");
                         reject("Authentication Error!");
@@ -177,7 +176,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
                     }
                     return response.json();
                 }).then((json:any) => {
-                    this.pluginLogs.info("new authToken:", json.access_token);
                     resolve(json.access_token);
                     // automatically revoke token after 10min
                     setTimeout(() => this._revokeAuthToken(), 600000);
@@ -374,9 +372,8 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	/**
 	 * Retrieve and store NSP release in this.nspVersion.
 	 * Release information will be shown to vsCode user.
-	 * 
-	 * Note: currently used to select OpenSearch API version
-	 */	
+	 * Note: currently used to select OpenSearch API version.
+	*/
 
 	private async _getNSPversion(): Promise<void> {
 		this.pluginLogs.info("Requesting NSP version");
@@ -1432,7 +1429,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 
 			const ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 			const match = ip.match(ipRegex);
-			
 			if (match) {
 				ip =  match[0];
 			} else {
@@ -1440,28 +1436,43 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 			}
 
 			if (await secretStorage.get(ip + '_username') != undefined && await secretStorage.get(ip + '_password') != undefined) {	
-				
+				config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 				const portConfig = vscode.workspace.getConfiguration('intentManager');
 				const wfmConfig = vscode.workspace.getConfiguration('workflowManager');
-				let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
-				if (is_standard_port == 'Yes') {
-					portConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
-					portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-					if (wfmConfig.get('port') != undefined && wfmConfig.get('standardPort') != undefined) {
-						wfmConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
-						wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+				let serverList:any = portConfig.get("NSPS");
+				let isPortAssociated = false;
+				for (let i = 0; i < serverList.length; i++) {
+					if (serverList[i].ip === ip) {
+						if (serverList[i].port != undefined) {
+							isPortAssociated = true
+							portConfig.update('port', serverList[i].port, vscode.ConfigurationTarget.Workspace);
+						}
+						break;
 					}
-					config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
-				} else {
-					await this.updatePort();	
-					config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);				
 				}
-				if (selection[0]) {
-					statusbar_server.text = 'NSP: ' + ip;
-					quickPick.hide();
-					quickPick.dispose();
+				
+				if (!isPortAssociated) {
+					let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
+					if (is_standard_port == 'Yes') {
+						for (let i = 0; i < serverList.length; i++) {
+							if (serverList[i].ip === ip) {
+								serverList[i].port = '';
+								break;
+							}
+						}
+						config.update('NSPS', serverList, vscode.ConfigurationTarget.Global);
+						config.update('port', '', vscode.ConfigurationTarget.Workspace);
+						if (wfmConfig.get('port') != undefined) {
+							wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+						}
+					} else {	
+						await this.updatePort();	
+					}
 				}
-				vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
+				statusbar_server.text = 'NSP: ' + ip;
+				quickPick.hide();
+				quickPick.dispose();
+				vscode.window.showInformationMessage('Connecting to NSP: ' + ip);	
 				await this.updateSettings();
 			} else { // If the username and password are not cached, prompt the user for the username and password
 				const usernameInput: string = await vscode.window.showInputBox({ prompt: 'Enter Username...'}) ?? '';
@@ -1472,24 +1483,45 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 					secretStorage.store(ip + '_password', passwordInput);
 					const portConfig = vscode.workspace.getConfiguration('intentManager');
 					const wfmConfig = vscode.workspace.getConfiguration('workflowManager');
-					let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
-					if (is_standard_port == 'Yes') {
-						portConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
-						portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-						if (wfmConfig.get('port') != undefined && wfmConfig.get('standardPort') != undefined) {
-							wfmConfig.update('standardPort', true, vscode.ConfigurationTarget.Workspace);
-							wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+					let serverList:any = portConfig.get("NSPS");
+					let isPortAssociated = false;
+					for (let i = 0; i < serverList.length; i++) {
+						if (serverList[i].ip === ip) {
+							if (serverList[i].port != undefined) {
+								isPortAssociated = true
+								portConfig.update('port', serverList[i].port, vscode.ConfigurationTarget.Workspace);
+							}
+							break;
 						}
-						config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
-					} else {
-						await this.updatePort();	
-						config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);			
 					}
-					if (selection[0]) {
-						statusbar_server.text = 'NSP: ' + ip;
-						quickPick.hide();
-						quickPick.dispose();
+					config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);	
+					if (!isPortAssociated) {
+						let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
+						if (is_standard_port == 'Yes') {
+							portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+							let serverList:any = portConfig.get("NSPS");
+							for (let i = 0; i < serverList.length; i++) {
+								if (serverList[i].ip === ip) {
+									serverList[i].port = '';
+								}
+							}
+							portConfig.update('NSPS', serverList, vscode.ConfigurationTarget.Global);
+							if (wfmConfig.get('port') != undefined) {
+								wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
+								let serverList:any = wfmConfig.get("NSPS");
+								for (let i = 0; i < serverList.length; i++) {
+									if (serverList[i].ip === ip) {
+										serverList[i].port = '';
+									}
+								}
+							}
+						} else {	
+							await this.updatePort();			
+						}
 					}
+					statusbar_server.text = 'NSP: ' + ip;
+					quickPick.hide();
+					quickPick.dispose();
 					vscode.window.showInformationMessage('Connecting to NSP: ' + ip);
 					await this.updateSettings();
 				} else {
@@ -1499,20 +1531,45 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		});
 	}
 
-	public async updatePort() {
-		const portConfig = vscode.workspace.getConfiguration('intentManager');
-		const wfmConfig = vscode.workspace.getConfiguration('workflowManager');
+	public async updateWFMPort() {
 
-		let imPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Intent Manager...' });
-		portConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
-		portConfig.update('port', imPort, vscode.ConfigurationTarget.Workspace);
-
-		if (wfmConfig.get('port') != undefined && wfmConfig.get('standardPort') != undefined) {
+		const portConfig = vscode.workspace.getConfiguration('workflowManager');
+		
+		if (portConfig) {
 			let wfmPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Workflow Manager...' });
-			wfmConfig.update('standardPort', false, vscode.ConfigurationTarget.Workspace);
-			wfmConfig.update('port', wfmPort, vscode.ConfigurationTarget.Workspace);
+			portConfig.update('port', wfmPort, vscode.ConfigurationTarget.Workspace);
 			
+			let serverList:any = portConfig.get("NSPS");
+			let activeServer = portConfig.get("activeServer");
+			for (let i = 0; i < serverList.length; i++) {
+				if (serverList[i].ip === activeServer) {
+					serverList[i].port = wfmPort;
+				}
+			}
+			portConfig.update('NSPS', serverList, vscode.ConfigurationTarget.Global);
 		}
+	}
+
+	public async updateIMPort() {
+
+		const imConfig = vscode.workspace.getConfiguration('intentManager');
+		let imPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Workflow Manager...' });
+		imConfig.update('port', imPort, vscode.ConfigurationTarget.Workspace);
+		
+		let serverList:any = imConfig.get("NSPS");
+		let activeServer = imConfig.get("activeServer");
+		for (let i = 0; i < serverList.length; i++) {
+			if (serverList[i].ip === activeServer) {
+				serverList[i].port = imPort;
+			}
+		}
+		imConfig.update('NSPS', serverList, vscode.ConfigurationTarget.Global);
+	
+	}
+
+	public async updatePort() {
+		await this.updateWFMPort();
+		await this.updateIMPort();
 		await this.updateSettings();
 	}
 
@@ -1521,10 +1578,8 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	 * Update IntentManagerProvider after configuration changes
 	 * 
 	*/	
-
 	public async updateSettings() {
 		this.pluginLogs.info("Updating IntentManagerProvider after configuration change");
-
 		const config = vscode.workspace.getConfiguration('intentManager');
 		this.timeout = config.get("timeout") ?? 90000; // default: 3min
 		this.fileIgnore = config.get("ignoreLabels") ?? [];

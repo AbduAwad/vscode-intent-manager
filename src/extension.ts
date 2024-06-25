@@ -27,23 +27,43 @@ export async function activate(context: vscode.ExtensionContext) {
 		nspServerStatusBar.show();
 	}
 
-	if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
-		let servers = wfmConfig.get("NSPS") ?? [];
-		imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
-	}
-	if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
-		let server = wfmConfig.get("activeServer"); // update the active server on the current window only:
-		if (imConfig.get("activeServer") != undefined) {
-			imConfig.update("activeServer", server, vscode.ConfigurationTarget.Workspace);
+	if (imConfig.get("activeServer") !== undefined) {
+		let imNSPS:any = imConfig.get("NSPS") ?? [];
+		let wfmNSPS:any = wfmConfig.get("NSPS") ?? [];
+		if (imNSPS.length > wfmNSPS.length) {
+			for (let i = wfmNSPS.length; i < imNSPS.length; i++) {
+				wfmNSPS.push(imNSPS[i]);
+			}
 		}
-		nspServerStatusBar.text = 'NSP: ' + server;
-	}
-	if (wfmConfig.get("standardPort") == true) {
-		imConfig.update("standardPort", true, vscode.ConfigurationTarget.Workspace);
-		imConfig.update("port", "", vscode.ConfigurationTarget.Workspace);
-	}
-	if (wfmConfig.get("standardPort") == false) {
-		imConfig.update("standardPort", false, vscode.ConfigurationTarget.Workspace);
+		if (wfmNSPS.length > imNSPS.length) {
+			for (let i = imNSPS.length; i < wfmNSPS.length; i++) {
+				imNSPS.push(wfmNSPS[i]);
+			}
+		}
+		for (let i = 0; i < imNSPS.length; i++) {
+			let imNSP = imNSPS[i];
+			let wfmNSP = wfmNSPS[i];
+			if (imNSP !== undefined && wfmNSP !== undefined) {
+				if (wfmNSP.ip !== imNSP.ip) {
+					imNSPS[i].ip = wfmNSP.ip;
+				}
+				if (imNSP.id !== wfmNSP.id) {
+					imNSPS[i].id = wfmNSP.id;
+				}
+				if (wfmNSP.port == "") {
+					imNSPS[i].port = "";
+				}
+			}
+		}	
+		imConfig.update("NSPS", imNSPS, vscode.ConfigurationTarget.Global);
+
+		if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
+			let server = wfmConfig.get("activeServer"); // update the active server on the current window only:
+			if (imConfig.get("activeServer") != undefined) {
+				imConfig.update("activeServer", server, vscode.ConfigurationTarget.Workspace);
+			}
+			nspServerStatusBar.text = 'NSP: ' + server;
+		}
 	}
 
 	const config = vscode.workspace.getConfiguration('intentManager');
@@ -99,28 +119,56 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (e) => {
 	
-	
 		if (e.affectsConfiguration('intentManager')) {
-			imProvider.updateSettings(); // config has changed
+			console.log("imNSPs1: ", imConfig.get("NSPS") ?? []);
+			console.log("wfmNSPs1: ", wfmConfig.get("NSPS") ?? []);
+			await imProvider.updateSettings(); // config has changed
+			console.log("imNSPs2: ", imConfig.get("NSPS") ?? []);
+			console.log("wfmNSPs2: ", wfmConfig.get("NSPS") ?? []);
 		}
 		if (e.affectsConfiguration('workflowManager')) {
 			const wfmConfig = vscode.workspace.getConfiguration('workflowManager'); // update intenet Manager NSP's:
 			let imConfig = vscode.workspace.getConfiguration('intentManager');
-			if (imConfig.get("NSPS") != wfmConfig.get("NSPS")) {
-				let servers = wfmConfig.get("NSPS") ?? [];
-				imConfig.update("NSPS", servers, vscode.ConfigurationTarget.Global);
+
+			if (e.affectsConfiguration("workflowManager.NSPS")) {
+				let imNSPS:any = imConfig.get("NSPS") ?? [];
+				let wfmNSPS:any = wfmConfig.get("NSPS") ?? [];
+				console.log("imNSPs: ", imNSPS);
+				console.log("wfmNSPs: ", wfmNSPS);
+
+				if (imNSPS.length > wfmNSPS.length) {
+					for (let i = wfmNSPS.length; i < imNSPS.length; i++) {
+						wfmNSPS.push(imNSPS[i]);
+					}
+				}
+				if (wfmNSPS.length > imNSPS.length) {
+					for (let i = imNSPS.length; i < wfmNSPS.length; i++) {
+						imNSPS.push(wfmNSPS[i]);
+					}
+				}
+				for (let i = 0; i < imNSPS.length; i++) {
+					let imNSP = imNSPS[i];
+					let wfmNSP = wfmNSPS[i];
+					if (imNSP !== undefined && wfmNSP !== undefined) {
+						if (wfmNSP.ip !== imNSP.ip) {
+							imNSPS[i].ip = wfmNSP.ip;
+						}
+						if (imNSP.id !== wfmNSP.id) {
+							imNSPS[i].id = wfmNSP.id;
+						}
+						if (wfmNSP.port == "") {
+							imNSPS[i].port = "";
+						}
+					}
+				}
+				console.log("imNSPs: ", imNSPS);
+				console.log("wfmNSPs: ", wfmNSPS);
+				imConfig.update("NSPS", imNSPS, vscode.ConfigurationTarget.Global);
 			}
 			if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
 				let server = wfmConfig.get("activeServer"); // update the active server:
 				imConfig.update("activeServer", server, vscode.ConfigurationTarget.Workspace);
 				nspServerStatusBar.text = 'NSP: ' + server;
-			}
-			if (wfmConfig.get("standardPort") == true) {
-				imConfig.update("standardPort", true, vscode.ConfigurationTarget.Workspace);
-				imConfig.update("port", "", vscode.ConfigurationTarget.Workspace);
-			}
-			if (wfmConfig.get("standardPort") == false) {
-				imConfig.update("standardPort", false, vscode.ConfigurationTarget.Workspace);
 			}
 			imProvider.updateSettings();
 		}

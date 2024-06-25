@@ -238,15 +238,13 @@
                 "description": "NSP server ip address or hostname",
                 "type": "string",
                 "uniqueItems": true
+              },
+              "port": {
+                "description": "NSP server port",
+                "type": "string"
               }
             }
           }
-        },
-        "intentManager.standardPort" :{
-          "type": "boolean",
-          "default": false,
-          "scope": "window",
-          "description": "Flag to check if standard port is enabled or not"
         },
         "intentManager.port": {
           "type": "string",
