@@ -131,7 +131,7 @@ Updates:
 
 ## [3.0.0] Multiple Server Support
 
-### Set Server Support Added
+### Select Server Support for Workspace
 - Users can now connect to multiple NSP servers on different VsCode Windows.
 - The current NSP server connection is displayed in the status bar. This connection is workspace-wide, allowing different VS Code workspaces/windows to connect to different NSP servers.
 - The list of servers is stored in the user's VS Code extension settings, ensuring consistency across multiple windows/sessions (application-wide).
@@ -140,12 +140,21 @@ Updates:
     <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/statusbar.png" width="450" alt="Status bar showing current NSP server">
 </p>
 
+### NOKIA_WFM and NOKIA_IM Extension Synchronized NSP Connection
+- When a server is selected both the WFM and IM extensions connect to the same NSP on a given VS Code workspace (window).
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/multiServer.png" width="400" alt="Port selection for NSP connection">
+</p>
+
+
 ### Server Selection
-- Clicking the status bar opens a drop-down menu where users can select an NSP server to connect to.
+- Clicking the status bar opens a drop-down menu where users can select an NSP server to connect to. The list of servers is consistent across all VS Code windows and is consistent among both the WFM and IM extensions.
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/servers.png" width="550" alt="Drop-down menu for selecting NSP servers">
 </p>
+
 
 ### Caching of NSP User/Password Credentials
 - After selecting an NSP server, users are prompted to enter a username and password.
@@ -172,18 +181,14 @@ Updates:
     <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/removeServer.png" width="550" alt="Option to remove NSP servers">
 </p>
 
-### Reset Username/Password for a Server
-- Users can reset the credentials for an IP they are connected to by clicking the settings icon.
+### Reset Connection Details for a Server
+- Users can reset the credentials for an IP they are connected to by clicking the settings icon. These credentials are:
+    - Username
+    - Password
+    - Port
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/resetCredentials.png" width="550" alt="Option to reset credentials">
-</p>
-
-### NOKIA_WFM and NOKIA_IM Extension Synchronized NSP Connection
-- Both the WFM and IM extensions connect to the same NSP on a given VS Code workspace (window).
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/multiServer.png" width="400" alt="Port selection for NSP connection">
 </p>
 
 ### Set Ports: 
@@ -191,6 +196,7 @@ Updates:
 - When an NSP is selected from the dropdown, VS Code prompts the user to choose between a standard port and a non-standard port.
 
 - If yes is selected (standard port), the NSP connection for NOKIA_WFM and NOKIA_IM will use the standard port, and the extensions will be set to no port.
+
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/port.png" width="550" alt="Port selection for NSP connection">
@@ -206,3 +212,21 @@ Updates:
     <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/WFM_PORT.png" width="550" alt="Port selection for NSP connection">
 </p>
 
+- Users will only need to enter the port once. Once a port is entered that port is associated with that NSP, so in subsequent connections, users will not need to enter the port again.
+
+- If a user enters an incorrect port they can reset connection details as observed in (Reset Connection Details for a Server) link: [Reset Connection Details for a Server](#reset-connection-details-for-a-server)
+
+### Logging to VsCode Output Channel
+
+* Logging for workflow manager operations using output channels of vscode. Logs are cleaned up and use the correct severity.
+* Moved plugin logging to log output channel of vscode (not console.log/warn/error anymore).
+  * Setup loglevel as desired from UI.
+  * Logging is available in normal production environment (no need to debug the plugin).
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/loggingSelection.png" width="850">
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/AbduAwad/vscode-workflow-manager/main/media/logging.png" width="850">
+</p>
