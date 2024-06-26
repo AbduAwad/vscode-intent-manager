@@ -1409,6 +1409,20 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 						}
 						const usernameInput: string = await vscode.window.showInputBox({ prompt: 'Enter Username...' }) ?? '';
 						const passwordInput: string = await vscode.window.showInputBox({ password: true,  prompt: 'Enter Password...' }) ?? '';
+						let portConfig = vscode.workspace.getConfiguration('intentManager');
+						let serverList:any = portConfig.get("NSPS");
+						let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
+						if (is_standard_port == 'Yes') {
+							for (let i = 0; i < serverList.length; i++) {
+								if (serverList[i].ip === ip) {
+									serverList[i].port = '443';
+									break;
+								}
+							}
+							config.update('NSPS', serverList, vscode.ConfigurationTarget.Global);
+						} else {
+							await this.updatePort();
+						}
 						if (await this.validateNSPCredentials(ip, usernameInput, passwordInput)) {
 							await secretStorage.delete(ip + '_username');
 							await secretStorage.delete(ip + '_password');
