@@ -27,34 +27,28 @@ export async function activate(context: vscode.ExtensionContext) {
 		nspServerStatusBar.show();
 	}
 
-	if (imConfig.get("activeServer") !== undefined) {
-		let imNSPS:any = imConfig.get("NSPS") ?? [];
+	if (wfmConfig.get("activeServer") !== undefined) {
+		const wfmConfig = vscode.workspace.getConfiguration('workflowManager');
+		let imConfig = vscode.workspace.getConfiguration('intentManager');
+	
 		let wfmNSPS:any = wfmConfig.get("NSPS") ?? [];
-		if (imNSPS.length > wfmNSPS.length) {
-			for (let i = wfmNSPS.length; i < imNSPS.length; i++) {
-				wfmNSPS.push(imNSPS[i]);
-			}
-		}
-		if (wfmNSPS.length > imNSPS.length) {
-			for (let i = imNSPS.length; i < wfmNSPS.length; i++) {
-				imNSPS.push(wfmNSPS[i]);
-			}
-		}
-		for (let i = 0; i < imNSPS.length; i++) {
-			let imNSP = imNSPS[i];
-			let wfmNSP = wfmNSPS[i];
-			if (imNSP !== undefined && wfmNSP !== undefined) {
-				if (wfmNSP.ip !== imNSP.ip) {
-					imNSPS[i].ip = wfmNSP.ip;
+		let imNSPS:any = imConfig.get("NSPS") ?? [];
+
+		let imNSPSMap = new Map();
+		imNSPS.forEach(item => {
+			imNSPSMap.set(item.id, item);
+		});
+		wfmNSPS.forEach(wfmItem => {
+			let imItem = imNSPSMap.get(wfmItem.id);
+			if (imItem) {
+				if (wfmItem.port === "443") {
+					imItem.port = wfmItem.port;
 				}
-				if (imNSP.id !== wfmNSP.id) {
-					imNSPS[i].id = wfmNSP.id;
-				}
-				if (wfmNSP.port == "") {
-					imNSPS[i].port = "";
-				}
+			} else {
+				imNSPS.push(wfmItem);
 			}
-		}	
+		});
+
 		imConfig.update("NSPS", imNSPS, vscode.ConfigurationTarget.Global);
 
 		if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {
@@ -131,38 +125,24 @@ export async function activate(context: vscode.ExtensionContext) {
 			let imConfig = vscode.workspace.getConfiguration('intentManager');
 
 			if (e.affectsConfiguration("workflowManager.NSPS")) {
-				let imNSPS:any = imConfig.get("NSPS") ?? [];
 				let wfmNSPS:any = wfmConfig.get("NSPS") ?? [];
-				console.log("imNSPs: ", imNSPS);
-				console.log("wfmNSPs: ", wfmNSPS);
-
-				if (imNSPS.length > wfmNSPS.length) {
-					for (let i = wfmNSPS.length; i < imNSPS.length; i++) {
-						wfmNSPS.push(imNSPS[i]);
-					}
-				}
-				if (wfmNSPS.length > imNSPS.length) {
-					for (let i = imNSPS.length; i < wfmNSPS.length; i++) {
-						imNSPS.push(wfmNSPS[i]);
-					}
-				}
-				for (let i = 0; i < imNSPS.length; i++) {
-					let imNSP = imNSPS[i];
-					let wfmNSP = wfmNSPS[i];
-					if (imNSP !== undefined && wfmNSP !== undefined) {
-						if (wfmNSP.ip !== imNSP.ip) {
-							imNSPS[i].ip = wfmNSP.ip;
+				let imNSPS:any = imConfig.get("NSPS") ?? [];
+		
+				let imNSPSMap = new Map();
+				imNSPS.forEach(item => {
+					imNSPSMap.set(item.id, item);
+				});
+				wfmNSPS.forEach(wfmItem => {
+					let imItem = imNSPSMap.get(wfmItem.id);
+					if (imItem) {
+						if (wfmItem.port === "443") {
+							imItem.port = wfmItem.port;
 						}
-						if (imNSP.id !== wfmNSP.id) {
-							imNSPS[i].id = wfmNSP.id;
-						}
-						if (wfmNSP.port == "") {
-							imNSPS[i].port = "";
-						}
+					} else {
+						imNSPS.push(wfmItem);
 					}
-				}
-				console.log("imNSPs: ", imNSPS);
-				console.log("wfmNSPs: ", wfmNSPS);
+				});
+		
 				imConfig.update("NSPS", imNSPS, vscode.ConfigurationTarget.Global);
 			}
 			if (imConfig.get("activeServer") != wfmConfig.get("activeServer")) {

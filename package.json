@@ -246,11 +246,6 @@
             }
           }
         },
-        "intentManager.port": {
-          "type": "string",
-          "scope": "window",
-          "description": "NSP IM port."
-        },
         "intentManager.timeout": {
           "type": "number",
           "default": 90000,

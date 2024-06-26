@@ -96,7 +96,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		const config = vscode.workspace.getConfiguration('intentManager');
 		this.nspAddr = config.get("activeServer") ?? "";
 		this.secretStorage = context.secrets;
-		this.port = config.get("port");
+		this.port = "";
 		this.timeout = config.get("timeout") ?? 90000;
 		this.fileIgnore = config.get("ignoreLabels") ?? [];
 		this.parallelOps = config.get("parallelOperations.enable") ?? false;
@@ -1456,15 +1456,11 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 					if (is_standard_port == 'Yes') {
 						for (let i = 0; i < serverList.length; i++) {
 							if (serverList[i].ip === ip) {
-								serverList[i].port = '';
+								serverList[i].port = '443';
 								break;
 							}
 						}
 						config.update('NSPS', serverList, vscode.ConfigurationTarget.Global);
-						config.update('port', '', vscode.ConfigurationTarget.Workspace);
-						if (wfmConfig.get('port') != undefined) {
-							wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-						}
 					} else {	
 						await this.updatePort();	
 					}
@@ -1489,7 +1485,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 						if (serverList[i].ip === ip) {
 							if (serverList[i].port != undefined) {
 								isPortAssociated = true
-								portConfig.update('port', serverList[i].port, vscode.ConfigurationTarget.Workspace);
 							}
 							break;
 						}
@@ -1498,23 +1493,13 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 					if (!isPortAssociated) {
 						let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
 						if (is_standard_port == 'Yes') {
-							portConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
 							let serverList:any = portConfig.get("NSPS");
 							for (let i = 0; i < serverList.length; i++) {
 								if (serverList[i].ip === ip) {
-									serverList[i].port = '';
+									serverList[i].port = '443';
 								}
 							}
 							portConfig.update('NSPS', serverList, vscode.ConfigurationTarget.Global);
-							if (wfmConfig.get('port') != undefined) {
-								wfmConfig.update('port', '', vscode.ConfigurationTarget.Workspace);
-								let serverList:any = wfmConfig.get("NSPS");
-								for (let i = 0; i < serverList.length; i++) {
-									if (serverList[i].ip === ip) {
-										serverList[i].port = '';
-									}
-								}
-							}
 						} else {	
 							await this.updatePort();			
 						}
@@ -1537,7 +1522,6 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 		
 		if (portConfig) {
 			let wfmPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Workflow Manager...' });
-			portConfig.update('port', wfmPort, vscode.ConfigurationTarget.Workspace);
 			
 			let serverList:any = portConfig.get("NSPS");
 			let activeServer = portConfig.get("activeServer");
@@ -1553,8 +1537,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	public async updateIMPort() {
 
 		const imConfig = vscode.workspace.getConfiguration('intentManager');
-		let imPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Workflow Manager...' });
-		imConfig.update('port', imPort, vscode.ConfigurationTarget.Workspace);
+		let imPort = await vscode.window.showInputBox({ prompt: 'Enter Port for NSP Intent Manager...' });
 		
 		let serverList:any = imConfig.get("NSPS");
 		let activeServer = imConfig.get("activeServer");
@@ -1564,13 +1547,11 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 			}
 		}
 		imConfig.update('NSPS', serverList, vscode.ConfigurationTarget.Global);
-	
 	}
 
 	public async updatePort() {
 		await this.updateWFMPort();
 		await this.updateIMPort();
-		await this.updateSettings();
 	}
 
 				
@@ -1581,11 +1562,19 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 	public async updateSettings() {
 		this.pluginLogs.info("Updating IntentManagerProvider after configuration change");
 		const config = vscode.workspace.getConfiguration('intentManager');
-		this.timeout = config.get("timeout") ?? 90000; // default: 3min
+		this.timeout = config.get("timeout") ?? 90000;
 		this.fileIgnore = config.get("ignoreLabels") ?? [];
 		this.parallelOps = config.get("parallelOperations.enable") ?? false;
 		const nsp:string = config.get("activeServer") ?? "";
-		const port:string = config.get("port");
+		
+		let port = ""
+		let serverList:any = config.get("NSPS");
+		for (let i = 0; i < serverList.length; i++) {
+			if (serverList[i].ip === nsp) {
+				port = serverList[i].port;
+			}
+		}
+		
 		if (nsp !== this.nspAddr || port !== this.port) {
 			this.pluginLogs.warn("Disconnecting from NSP", this.nspAddr);
 			this._revokeAuthToken();
