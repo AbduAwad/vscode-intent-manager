@@ -41,7 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		wfmNSPS.forEach(wfmItem => {
 			let imItem = imNSPSMap.get(wfmItem.id);
 			if (imItem) {
-				if (wfmItem.port === "443") {
+				if (wfmItem.port === "443" || !wfmItem.port) {
 					imItem.port = wfmItem.port;
 				}
 			} else {
@@ -135,7 +135,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				wfmNSPS.forEach(wfmItem => {
 					let imItem = imNSPSMap.get(wfmItem.id);
 					if (imItem) {
-						if (wfmItem.port === "443") {
+						if (wfmItem.port === "443"  || !wfmItem.port) {
 							imItem.port = wfmItem.port;
 						}
 					} else {
@@ -167,8 +167,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('nokia-intent-manager.setServer', async () => {
 		let updatedConfig = vscode.workspace.getConfiguration('intentManager');
 		imProvider.setServer(updatedConfig, nspServerStatusBar, secretStorage); // set Active Workflow Manager NSP Server
-	
 	}));
+
 	vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.length : 0, null, { uri: vscode.Uri.parse('im:/'), name: "Intent Manager" });
 }
 

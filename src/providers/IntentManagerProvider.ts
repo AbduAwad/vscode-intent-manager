@@ -1370,7 +1370,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 			}
 
 			if (await secretStorage.get(ip + '_username') != undefined && await secretStorage.get(ip + '_password') != undefined) {	
-				config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
+				
 				const portConfig = vscode.workspace.getConfiguration('intentManager');
 	
 				let serverList:any = portConfig.get("NSPS");
@@ -1383,6 +1383,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 						await this.updateIMPort();	
 					}
 				}
+				await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);
 				statusbar_server.text = 'NSP: ' + ip;
 				quickPick.hide();
 				quickPick.dispose();
@@ -1398,7 +1399,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 					
 					const portConfig = vscode.workspace.getConfiguration('intentManager');
 					let serverList:any = portConfig.get("NSPS");
-					config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);	
+					
 					
 					if (!(await this.isPortAssociated(serverList, ip))) {
 						let is_standard_port = await vscode.window.showQuickPick(['Yes', 'No'], { placeHolder: 'Connect to standard port?' });
@@ -1409,6 +1410,7 @@ export class IntentManagerProvider implements vscode.FileSystemProvider, vscode.
 							await this.updateIMPort();			
 						}
 					}
+					await config.update('activeServer', ip, vscode.ConfigurationTarget.Workspace);	
 					statusbar_server.text = 'NSP: ' + ip;
 					quickPick.hide();
 					quickPick.dispose();
